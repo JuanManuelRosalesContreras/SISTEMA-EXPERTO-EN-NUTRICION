@@ -1,10 +1,20 @@
-<?php include("includes/header.php"); ?>
+<?php
+session_start();
+
+// Proteger la página
+if (!isset($_SESSION['id_usuario'])) {
+    header("Location: login.php");
+    exit();
+}
+
+include("includes/header.php");
+?>
 
 <div class="container">
     <h2>Datos del Paciente</h2>
 
     <form action="pages/seleccionar_alimentos.php" method="POST" onsubmit="return validarFormulario()">
-        
+
         <label>Nombre:</label>
         <input type="text" name="nombre" required>
 
@@ -39,6 +49,7 @@
         </select>
 
         <button type="submit">Continuar</button>
+
     </form>
 </div>
 

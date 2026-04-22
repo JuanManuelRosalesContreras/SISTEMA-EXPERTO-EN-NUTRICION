@@ -1,21 +1,47 @@
-<?php include("../includes/header.php"); ?>
+<?php
+session_start();
+
+// Proteger la página
+if (!isset($_SESSION['id_usuario'])) {
+    header("Location: ../login.php");
+    exit();
+}
+
+include("../queries/dietas.php");
+include("../includes/header.php");
+
+$nombre = $_POST['nombre'];
+$enfermedad = $_POST['enfermedad'];
+$objetivo = $_POST['objetivo'];
+$sugerencias = isset($_POST['sugerencias']) ? $_POST['sugerencias'] : [];
+$recetas_nombre = $_POST['recetas_nombre'] ?? [];
+$recetas_tipo = $_POST['recetas_tipo'] ?? [];
+$recetas_calorias = $_POST['recetas_calorias'] ?? [];
+$recetas_descripcion = $_POST['recetas_descripcion'] ?? [];
+$recetas_porciones = $_POST['recetas_porciones'] ?? [];
+$recetas_preparacion = $_POST['recetas_preparacion'] ?? [];
+
+// Armar array de recetas para guardar
+$recetas_guardar = [];
+for ($i = 0; $i < count($recetas_nombre); $i++) {
+    $recetas_guardar[] = [
+        'nombre'      => $recetas_nombre[$i],
+        'tipo'        => $recetas_tipo[$i],
+        'calorias'    => $recetas_calorias[$i],
+        'descripcion' => $recetas_descripcion[$i],
+        'porciones'   => $recetas_porciones[$i],
+        'preparacion' => $recetas_preparacion[$i]
+    ];
+}
+
+// Guardar dieta automáticamente
+$id_usuario = $_SESSION['id_usuario'];
+guardarDieta($id_usuario, $nombre, $enfermedad, $objetivo, $recetas_guardar, $sugerencias);
+?>
 
 <div class="container">
     <h2>Resultado de la dieta</h2>
     <br>
-
-    <?php
-    $nombre = $_POST['nombre'];
-    $enfermedad = $_POST['enfermedad'];
-    $objetivo = $_POST['objetivo'];
-    $sugerencias = isset($_POST['sugerencias']) ? $_POST['sugerencias'] : [];
-    $recetas_nombre = $_POST['recetas_nombre'] ?? [];
-    $recetas_tipo = $_POST['recetas_tipo'] ?? [];
-    $recetas_calorias = $_POST['recetas_calorias'] ?? [];
-    $recetas_descripcion = $_POST['recetas_descripcion'] ?? [];
-    $recetas_porciones = $_POST['recetas_porciones'] ?? [];
-    $recetas_preparacion = $_POST['recetas_preparacion'] ?? [];
-    ?>
 
     <p><strong>Paciente:</strong> <?php echo $nombre; ?></p>
     <p><strong>Enfermedad:</strong> <?php echo $enfermedad; ?></p>
@@ -35,53 +61,49 @@
 
         <?php if (!empty($recetas_nombre)): ?>
 
-    <div class="acordeon1">
+            <div class="acordeon1">
 
-        <?php for ($i = 0; $i < count($recetas_nombre); $i++): ?>
+                <?php for ($i = 0; $i < count($recetas_nombre); $i++): ?>
 
-            <div class="item-acordeon1">
+                    <div class="item-acordeon1">
 
-                <!-- TÍTULO -->
-                <button class="titulo-acordeon1" onclick="toggleReceta(<?php echo $i; ?>)">
-                    <?php echo $recetas_nombre[$i]; ?>
-                </button>
+                        <button class="titulo-acordeon1" onclick="toggleReceta(<?php echo $i; ?>)">
+                            <?php echo $recetas_nombre[$i]; ?>
+                        </button>
 
-                <!-- CONTENIDO -->
-                <div class="contenido-acordeon1" id="receta-<?php echo $i; ?>">
+                        <div class="contenido-acordeon1" id="receta-<?php echo $i; ?>">
 
-                    <p><strong>Tipo:</strong> <?php echo $recetas_tipo[$i]; ?></p>
-                    <p><strong>Calorías:</strong> <?php echo $recetas_calorias[$i]; ?> kcal</p>
-                    <p><strong>Porciones:</strong> <?php echo $recetas_porciones[$i]; ?></p>
+                            <p><strong>Tipo:</strong> <?php echo $recetas_tipo[$i]; ?></p>
+                            <p><strong>Calorías:</strong> <?php echo $recetas_calorias[$i]; ?> kcal</p>
+                            <p><strong>Porciones:</strong> <?php echo $recetas_porciones[$i]; ?></p>
 
-                    <p><strong>Descripción:</strong><br>
-                    <?php echo $recetas_descripcion[$i]; ?></p>
-                    <br>
-                    <p><strong>Preparación:</strong></p>
-                    <pre><?php echo htmlspecialchars($recetas_preparacion[$i]); ?></pre>
+                            <p><strong>Descripción:</strong><br>
+                            <?php echo $recetas_descripcion[$i]; ?></p>
+                            <br>
+                            <p><strong>Preparación:</strong></p>
+                            <pre><?php echo htmlspecialchars($recetas_preparacion[$i]); ?></pre>
 
-                </div>
+                        </div>
+
+                    </div>
+
+                <?php endfor; ?>
 
             </div>
 
-        <?php endfor; ?>
-
-    </div>
-
-<?php else: ?>
-    <p>No se encontraron recetas adecuadas. Intenta seleccionar más alimentos.</p>
-<?php endif; ?>
+        <?php else: ?>
+            <p>No se encontraron recetas adecuadas. Intenta seleccionar más alimentos.</p>
+        <?php endif; ?>
     </div>
 
     <br>
-    <a href="../index.php">
-        <button>Volver al inicio</button>
-    </a>
+    <a href="../pages/historial.php"><button>Ver mi historial</button></a>
+    <a href="../index.php"><button>Volver al inicio</button></a>
+
 </div>
 
 <script>
 function toggleReceta(id) {
-
-    // Cerrar todos
     const contenidos = document.querySelectorAll('.contenido-acordeon1');
     contenidos.forEach((item, index) => {
         if (index !== id) {
@@ -89,9 +111,7 @@ function toggleReceta(id) {
         }
     });
 
-    // Abrir/cerrar el actual
     const contenido = document.getElementById("receta-" + id);
-
     if (contenido.style.display === "block") {
         contenido.style.display = "none";
     } else {
